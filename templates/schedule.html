@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}定时任务{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1 class="page-title">定时任务</h1><p class="page-subtitle">按星期和时间设置自动打印</p></div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>新建保养计划</h3></div>
+    <div class="card-body">
+        <form action="{{ url_for('create_job') }}" method="POST">
+            <div class="form-row-top">
+                <div class="form-group"><label>计划名称</label><input type="text" name="name" value="喷头保养" required></div>
+                <div class="form-group"><label>每次张数</label>
+                    <select name="images_per_run"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select>
+                </div>
+            </div>
+            <div class="form-group"><label>选择星期</label>
+                <div class="day-picker">
+                    <label class="day-btn"><input type="checkbox" name="days" value="0"><span>周一</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="1"><span>周二</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="2"><span>周三</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="3"><span>周四</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="4"><span>周五</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="5"><span>周六</span></label>
+                    <label class="day-btn"><input type="checkbox" name="days" value="6"><span>周日</span></label>
+                    <label class="day-btn day-all"><input type="checkbox" name="days" value="7"><span>每天</span></label>
+                </div>
+            </div>
+            <div class="form-row-bottom">
+                <div class="form-group"><label>打印时间</label>
+                    <div class="time-inputs"><input type="number" name="hour" value="9" min="0" max="23" class="time-input"><span>:</span><input type="number" name="minute" value="30" min="0" max="59" class="time-input"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">创建计划</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>保养计划 ({{ jobs|length }})</h3></div>
+    {% if jobs %}
+    <div class="plan-list">
+        {% for job in jobs %}
+        <div class="plan-item {% if not job.enabled %}plan-disabled{% endif %}">
+            <div class="plan-head">
+                <span class="status-dot {% if job.enabled %}dot-active{% else %}dot-paused{% endif %}"></span>
+                <div class="plan-info">
+                    <div class="plan-name">{{ job.name }}</div>
+                    <div class="plan-meta">每次 {{ job.images_per_run }} 张</div>
+                </div>
+                <div class="plan-actions">
+                    <form action="{{ url_for('run_job_now', job_id=job.id) }}" method="POST" style="display:inline"><button class="btn btn-sm btn-amber">执行</button></form>
+                    <form action="{{ url_for('toggle_job', job_id=job.id) }}" method="POST" style="display:inline"><button class="btn btn-sm {% if job.enabled %}btn-outline{% else %}btn-green{% endif %}">{% if job.enabled %}暂停{% else %}启用{% endif %}</button></form>
+                    <form action="{{ url_for('delete_job', job_id=job.id) }}" method="POST" style="display:inline" onsubmit="return confirmAction('确认删除?')"><button class="btn btn-sm btn-danger">删除</button></form>
+                </div>
+            </div>
+
+            <div class="time-slots">
+                {% for t in job.times %}
+                <div class="slot">
+                    <span class="slot-day">{{ t.day_name }}</span>
+                    <span class="slot-time">{{ t.time_str }}</span>
+                    {% if t.last_run %}<span class="slot-last">上次: {{ t.last_run.strftime('%m-%d %H:%M') }}</span>{% endif %}
+                    <form action="{{ url_for('delete_time', time_id=t.id) }}" method="POST" style="display:inline" onsubmit="return confirmAction('删除此时间?')"><button class="slot-del" title="删除">✕</button></form>
+                </div>
+                {% endfor %}
+                {% if not job.times %}<div class="slot-empty">暂未设置时间</div>{% endif %}
+            </div>
+
+            <div class="add-slot">
+                <form action="{{ url_for('add_time', job_id=job.id) }}" method="POST" class="add-form">
+                    <div class="day-picker mini">
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="0"><span>一</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="1"><span>二</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="2"><span>三</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="3"><span>四</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="4"><span>五</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="5"><span>六</span></label>
+                        <label class="day-btn-sm"><input type="checkbox" name="days" value="6"><span>日</span></label>
+                        <label class="day-btn-sm day-all"><input type="checkbox" name="days" value="7"><span>每天</span></label>
+                    </div>
+                    <div class="time-inputs sm"><input type="number" name="hour" value="9" min="0" max="23" class="time-input"><span>:</span><input type="number" name="minute" value="0" min="0" max="59" class="time-input"></div>
+                    <button type="submit" class="btn btn-sm btn-green">+ 添加</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state small"><p>暂无保养计划，请在上方创建</p></div>
+    {% endif %}
+</div>
+{% endblock %}

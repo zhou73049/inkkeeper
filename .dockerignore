@@ -1,0 +1,6 @@
+echo '.git' > /mnt/sda1/inkkeeper-export/.dockerignore
+echo '.env' >> /mnt/sda1/inkkeeper-export/.dockerignore
+echo 'data/' >> /mnt/sda1/inkkeeper-export/.dockerignore
+echo '*.md' >> /mnt/sda1/inkkeeper-export/.dockerignore
+echo '__pycache__' >> /mnt/sda1/inkkeeper-export/.dockerignore
+echo '*.db' >> /mnt/sda1/inkkeeper-export/.dockerignore

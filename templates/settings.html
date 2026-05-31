@@ -1,0 +1,116 @@
+<!-- ==================== templates/settings.html ==================== -->
+{% extends "base.html" %}
+{% block title %}系统设置{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">系统设置</h1>
+        <p class="page-subtitle">打印机连接与系统配置</p>
+    </div>
+</div>
+
+<!-- 打印机状态 -->
+<div class="card">
+    <div class="card-header">
+        <h3>打印机状态</h3>
+        <span class="status-badge {{ 'success' if printer.available else 'error' }}">
+            {% if printer.available %}在线{% else %}离线{% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="settings-grid">
+            <div class="setting-item">
+                <span class="setting-label">连接方式</span>
+                <span class="setting-value">{{ printer.method }}</span>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">打印机名称</span>
+                <span class="setting-value">{{ printer.name }}</span>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">状态</span>
+                <span class="setting-value">{{ printer.status }}</span>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">详细信息</span>
+                <span class="setting-value detail">{{ printer.detail }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 当前配置 -->
+<div class="card">
+    <div class="card-header">
+        <h3>当前配置</h3>
+    </div>
+    <div class="card-body">
+        <div class="settings-grid">
+            {% for key, value in config.items() %}
+            <div class="setting-item">
+                <span class="setting-label">{{ key }}</span>
+                <span class="setting-value mono">{{ value or '(未设置)' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- CUPS 打印机列表 -->
+<div class="card">
+    <div class="card-header">
+        <h3>CUPS 打印机列表</h3>
+    </div>
+    <div class="card-body">
+        <pre class="code-block">{{ printers_list }}</pre>
+    </div>
+</div>
+
+<!-- 配置说明 -->
+<div class="card">
+    <div class="card-header">
+        <h3>配置说明</h3>
+    </div>
+    <div class="card-body">
+        <div class="help-content">
+            <h4>打印机连接方式</h4>
+            <p>通过环境变量 <code>PRINTER_CONNECTION</code> 设置:</p>
+            <dl>
+                <dt><code>cups</code> (默认)</dt>
+                <dd>使用 CUPS 打印系统。需挂载宿主机的 CUPS socket 和配置:
+                    <pre class="code-block">-v /var/run/cups/cups.sock:/var/run/cups/cups.sock:ro
+-v /etc/cups:/etc/cups:ro</pre>
+                </dd>
+
+                <dt><code>network</code></dt>
+                <dd>直连网络打印机 (端口 9100)。需设置 <code>PRINTER_IP</code></dd>
+
+                <dt><code>script</code></dt>
+                <dd>使用自定义打印脚本。需设置 <code>PRINT_SCRIPT</code> 路径，脚本接收参数: <code>脚本路径 &lt;图片文件&gt; &lt;任务名&gt;</code></dd>
+            </dl>
+
+            <h4>USB 打印机</h4>
+            <p>如需直接访问 USB 打印机，在 docker-compose.yml 中添加:</p>
+            <pre class="code-block">devices:
+  - /dev/usb/lp0:/dev/usb/lp0
+# 或者使用 privileged: true</pre>
+
+            <h4>环境变量一览</h4>
+            <table class="table help-table">
+                <thead>
+                    <tr><th>变量</th><th>默认值</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>PRINTER_CONNECTION</code></td><td>cups</td><td>连接方式: cups / network / script</td></tr>
+                    <tr><td><code>PRINTER_NAME</code></td><td>InkKeeper_Printer</td><td>CUPS 打印机名称</td></tr>
+                    <tr><td><code>PRINTER_IP</code></td><td>(空)</td><td>网络打印机 IP</td></tr>
+                    <tr><td><code>PRINT_SCRIPT</code></td><td>(空)</td><td>自定义打印脚本路径</td></tr>
+                    <tr><td><code>TZ</code></td><td>Asia/Shanghai</td><td>时区</td></tr>
+                    <tr><td><code>SECRET_KEY</code></td><td>(内置)</td><td>Flask 密钥，生产环境请修改</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

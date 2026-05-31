@@ -1,0 +1,147 @@
+<!-- ==================== templates/images.html ==================== -->
+{% extends "base.html" %}
+{% block title %}图片管理{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">图片管理</h1>
+        <p class="page-subtitle">上传和管理保养打印图片</p>
+    </div>
+</div>
+
+<!-- 上传区域 -->
+<div class="card">
+    <div class="card-header">
+        <h3>上传图片</h3>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('upload_image') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-zone" id="dropZone">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p class="upload-text">拖拽图片到此处，或 <label for="fileInput" class="upload-link">点击选择</label></p>
+                <p class="upload-hint">支持 PNG / JPG / BMP / GIF / TIFF / WebP · 最大 50MB · 可多选</p>
+                <input type="file" name="files" id="fileInput" multiple accept="image/*" class="sr-only">
+            </div>
+            <div class="upload-options">
+                <div class="form-group inline">
+                    <label>标签</label>
+                    <select name="tag">
+                        <option value="保养图">保养图</option>
+                        <option value="彩色测试">彩色测试</option>
+                        <option value="喷嘴检查">喷嘴检查</option>
+                        <option value="自定义">自定义</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="uploadBtn">上传</button>
+            </div>
+            <div id="filePreview" class="file-preview"></div>
+        </form>
+    </div>
+</div>
+
+<!-- 图片列表 -->
+<div class="card">
+    <div class="card-header">
+        <h3>已上传图片 ({{ images.total }})</h3>
+    </div>
+    {% if images.items %}
+    <div class="image-grid">
+        {% for img in images.items %}
+        <div class="image-card {% if not img.is_active %}image-disabled{% endif %}">
+            <div class="image-thumb">
+                <img src="{{ url_for('uploaded_file', filename=img.filename) }}" alt="{{ img.original_name }}" loading="lazy">
+                <div class="image-overlay">
+                    <span class="image-tag">{{ img.tag }}</span>
+                </div>
+            </div>
+            <div class="image-info">
+                <div class="image-name" title="{{ img.original_name }}">{{ img.original_name[:20] }}{% if img.original_name|length > 20 %}...{% endif %}</div>
+                <div class="image-meta">
+                    {% if img.width and img.height %}
+                        {{ img.width }}×{{ img.height }} ·
+                    {% endif %}
+                    {{ '%.1f' | format(img.file_size / 1024) }}KB
+                    · 已打印 {{ img.print_count }} 次
+                </div>
+            </div>
+            <div class="image-actions">
+                <form action="{{ url_for('manual_print', image_id=img.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn-icon" title="立即打印">🖨</button>
+                </form>
+                <form action="{{ url_for('toggle_image', image_id=img.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn-icon" title="{% if img.is_active %}禁用{% else %}启用{% endif %}">
+                        {% if img.is_active %}👁{% else %}👁‍🗨{% endif %}
+                    </button>
+                </form>
+                <form action="{{ url_for('delete_image', image_id=img.id) }}" method="POST" style="display:inline;"
+                      onsubmit="return confirmAction('确认删除图片 [{{ img.original_name }}]?')">
+                    <button type="submit" class="btn-icon danger" title="删除">✕</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页 -->
+    {% if images.pages > 1 %}
+    <div class="pagination">
+        {% if images.has_prev %}
+            <a href="{{ url_for('images', page=images.prev_num) }}" class="page-btn">← 上一页</a>
+        {% endif %}
+        <span class="page-info">第 {{ images.page }} / {{ images.pages }} 页</span>
+        {% if images.has_next %}
+            <a href="{{ url_for('images', page=images.next_num) }}" class="page-btn">下一页 →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <p>暂无图片，请上传保养打印图片</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 拖拽上传
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('filePreview');
+
+    ['dragenter', 'dragover'].forEach(e => {
+        dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(e => {
+        dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', ev => {
+        fileInput.files = ev.dataTransfer.files;
+        showPreview();
+    });
+    fileInput.addEventListener('change', showPreview);
+
+    function showPreview() {
+        const files = fileInput.files;
+        if (!files.length) { preview.innerHTML = ''; return; }
+        let html = '<div class="preview-list">';
+        for (const f of files) {
+            const icon = f.type.startsWith('image/') ? '🖼' : '📄';
+            html += `<span class="preview-chip">${icon} ${f.name} (${(f.size/1024).toFixed(0)}KB)</span>`;
+        }
+        html += '</div>';
+        preview.innerHTML = html;
+    }
+</script>
+{% endblock %}

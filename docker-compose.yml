@@ -1,0 +1,21 @@
+# ==================== docker-compose.yml ====================
+services:
+  inkkeeper:
+    build: .
+    image: inkkeeper:latest
+    container_name: inkkeeper
+    restart: unless-stopped
+    ports:
+      - "15000:5000"
+    environment:
+      - TZ=Asia/Shanghai
+      - SECRET_KEY=inkkeeper-default-key
+      - PRINTER_CONNECTION=cups
+      - PRINTER_NAME=EPSON_L4268
+      - PRINTER_IP=10.10.50.16
+    volumes:
+      - ./data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m

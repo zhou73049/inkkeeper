@@ -1,0 +1,76 @@
+<!-- ==================== templates/logs.html ==================== -->
+{% extends "base.html" %}
+{% block title %}打印日志{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">打印日志</h1>
+        <p class="page-subtitle">查看所有打印记录</p>
+    </div>
+    <div class="header-actions">
+        <form action="{{ url_for('clear_logs') }}" method="POST" onsubmit="return confirmAction('确认清空所有日志?')">
+            <button type="submit" class="btn btn-sm btn-danger">清空日志</button>
+        </form>
+    </div>
+</div>
+
+<!-- 筛选 -->
+<div class="filter-bar">
+    <a href="{{ url_for('logs') }}" class="filter-chip {% if not status_filter %}active{% endif %}">全部</a>
+    <a href="{{ url_for('logs', status='success') }}" class="filter-chip {% if status_filter == 'success' %}active{% endif %}">成功</a>
+    <a href="{{ url_for('logs', status='error') }}" class="filter-chip {% if status_filter == 'error' %}active{% endif %}">失败</a>
+</div>
+
+<div class="card">
+    {% if logs.items %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>时间</th>
+                <th>图片</th>
+                <th>方式</th>
+                <th>状态</th>
+                <th>信息</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs.items %}
+            <tr>
+                <td class="td-time">{{ log.printed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ log.image_name }}</td>
+                <td><span class="method-tag">{{ '定时' if log.method == 'auto' else '手动' }}</span></td>
+                <td>
+                    <span class="status-badge {{ log.status }}">
+                        {% if log.status == 'success' %}✓ 成功{% else %}✕ 失败{% endif %}
+                    </span>
+                </td>
+                <td class="td-msg">{{ log.message[:80] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if logs.pages > 1 %}
+    <div class="pagination">
+        {% if logs.has_prev %}
+            <a href="{{ url_for('logs', page=logs.prev_num, status=status_filter) }}" class="page-btn">← 上一页</a>
+        {% endif %}
+        <span class="page-info">第 {{ logs.page }} / {{ logs.pages }} 页</span>
+        {% if logs.has_next %}
+            <a href="{{ url_for('logs', page=logs.next_num, status=status_filter) }}" class="page-btn">下一页 →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p>暂无打印记录</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

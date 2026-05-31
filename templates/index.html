@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}仪表盘{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1 class="page-title">仪表盘</h1><p class="page-subtitle">打印机喷头保养总览</p></div>
+    <div class="header-actions"><span class="scheduler-badge {% if printer.available %}badge-online{% else %}badge-offline{% endif %}"><span class="badge-dot"></span>{{ printer.method }}: {{ printer.status }}</span></div>
+</div>
+<div class="stats-grid">
+    <div class="stat-card" style="--card-accent:var(--amber)"><div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="9" width="12" height="11" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6"/></svg></div><div class="stat-body"><div class="stat-value">{{ printer.name if printer.available else '未连接' }}</div><div class="stat-label">打印机</div></div></div>
+    <div class="stat-card" style="--card-accent:var(--green)"><div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div><div class="stat-body"><div class="stat-value">{{ image_count }}</div><div class="stat-label">保养图片</div></div></div>
+    <div class="stat-card" style="--card-accent:var(--blue)"><div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-body"><div class="stat-value">{{ jobs|selectattr('enabled')|list|length }}</div><div class="stat-label">活跃计划</div></div></div>
+    <div class="stat-card" style="--card-accent:var(--red)"><div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-body"><div class="stat-value">{{ total_prints }}</div><div class="stat-label">累计打印</div></div></div>
+</div>
+<div class="content-grid">
+    <div class="card"><div class="card-header"><h3>今日概况</h3></div><div class="card-body">
+        <div class="today-stats"><div class="today-item success"><div class="today-count">{{ success_today }}</div><div class="today-label">成功</div></div><div class="today-divider"></div><div class="today-item error"><div class="today-count">{{ error_today }}</div><div class="today-label">失败</div></div></div>
+        {% if success_today+error_today>0 %}<div class="progress-bar"><div class="progress-success" style="width:{{ (success_today/(success_today+error_today)*100)|int }}%"></div></div>{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header"><h3>保养计划</h3><a href="{{ url_for('schedule') }}" class="btn-link">管理</a></div><div class="card-body">
+        {% if jobs %}{% for job in jobs[:5] %}
+        <div class="job-row"><div class="job-status {% if job.enabled %}active{% else %}paused{% endif %}"></div><div class="job-info"><div class="job-name">{{ job.name }}</div><div class="job-meta">{% if job.times %}{% for t in job.times[:3] %}{{ t.day_name }} {{ t.time_str }}{% if not loop.last %} / {% endif %}{% endfor %}{% if job.times|length>3 %} +{{ job.times|length-3 }}{% endif %}{% else %}未设置时间{% endif %}</div></div><div class="job-last">{{ job.images_per_run }}张/次</div></div>
+        {% endfor %}{% else %}<div class="empty-state small"><p>暂无计划</p></div>{% endif %}
+    </div></div>
+</div>
+<div class="card"><div class="card-header"><h3>最近记录</h3><a href="{{ url_for('logs') }}" class="btn-link">全部</a></div>
+    {% if recent_logs %}
+    <table class="table"><thead><tr><th>时间</th><th>图片</th><th>方式</th><th>状态</th><th>信息</th></tr></thead><tbody>
+    {% for log in recent_logs[:10] %}<tr><td class="td-time">{{ log.printed_at.strftime('%m-%d %H:%M') }}</td><td>{{ log.image_name }}</td><td><span class="method-tag">{{ log.method }}</span></td><td><span class="status-badge {{ log.status }}">{% if log.status=='success' %}成功{% else %}失败{% endif %}</span></td><td class="td-msg">{{ log.message[:50] }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<div class="empty-state small"><p>暂无记录</p></div>{% endif %}
+</div>
+{% endblock %}

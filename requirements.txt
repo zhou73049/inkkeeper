@@ -1,0 +1,6 @@
+# ==================== requirements.txt ====================
+Flask==3.1.1
+Flask-SQLAlchemy==3.1.1
+APScheduler==3.11.0
+Pillow==11.2.1
+gunicorn==23.0.0

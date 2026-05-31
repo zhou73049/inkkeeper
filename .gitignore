@@ -1,0 +1,5 @@
+echo 'data/' > /mnt/sda1/inkkeeper-export/.gitignore
+echo '*.db' >> /mnt/sda1/inkkeeper-export/.gitignore
+echo '__pycache__/' >> /mnt/sda1/inkkeeper-export/.gitignore
+echo '*.pyc' >> /mnt/sda1/inkkeeper-export/.gitignore
+echo '.env' >> /mnt/sda1/inkkeeper-export/.gitignore
