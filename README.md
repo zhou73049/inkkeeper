@@ -55,7 +55,69 @@ text
 
 ## 常用命令
 docker logs inkkeeper --tail 50 # 查看日志
+
 docker restart inkkeeper # 重启
+
 docker stop inkkeeper # 停止
+
+以飞牛NAS 部署步骤为例
+
+1. SSH 登录飞牛
+
+bash
+bash
+ssh root@飞牛的IP地址
+
+2. 安装 Git
+
+bash
+bash
+apt update && apt install git -y
+
+3. 克隆项目
+
+bash
+bash
+cd /vol1/docker
+git clone https://github.com/zhou73049/inkkeeper.git
+cd inkkeeper
+
+/vol1/docker 是飞牛常用的 Docker 数据盘路径，如果你的挂载路径不同，换成对应的。
+
+
+4. 修改打印机 IP
+
+bash
+bash
+vi docker-compose.yml
+
+把 PRINTER_IP 改成飞牛局域网内打印机的 IP，PRINTER_NAME 改成你的打印机型号。
+
+
+改完后按 ESC，输入 :wq 回车保存。
+
+
+5. 创建数据目录并启动
+
+bash
+bash
+mkdir -p data/uploads
+docker compose up -d --build
+
+等构建完成后：
+
+
+bash
+bash
+docker logs inkkeeper --tail 10
+
+看到 数据库初始化完成 就成功了。
+
+
+6. 浏览器访问
+
+text
+text
+http://飞牛的IP地址:15000
 # -
 设置打印机自动打印，从而保证喷头不堵塞。适用于家里有喷墨打印机 ，但是打印较少，导致喷头易堵。此程序为AI编写，本人不懂代码，任何问题反馈给我，我都不能及时解决！！
