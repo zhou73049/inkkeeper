@@ -31,6 +31,13 @@
 
 ## 快速部署
 
+git clone 
+https://github.com/zhou73049/inkkeeper.git
+
+cd inkkeeper
+vi docker-compose.yml
+docker compose up -d --build
+
 1. 修改配置
 编辑 `docker-compose.yml`，修改以下内容：
 - `PRINTER_NAME` — 你的打印机型号
