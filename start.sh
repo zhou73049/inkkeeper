@@ -1,8 +1,6 @@
 #!/bin/bash
 # ==================== start.sh ====================
 # InkKeeper 快速启动脚本
-
-#!/bin/bash
 set -e
 
 echo "[InkKeeper] 启动 CUPS..."
